@@ -7,7 +7,9 @@ import ReactDOM from 'react-dom';
 import {debounce} from 'throttle-debounce';
 import { 
   initialAction,
-  matrixUpdate
+  matrixUpdate,
+  matrixAction,
+  selectedDiamentionalUpdate
 } from 'actions/HelloWorld'
 import { bindActionCreators } from "redux";
 import './Helloworld.scss'
@@ -17,12 +19,15 @@ class HelloWorld extends Component {
     constructor(props){
         super(props)
         this.state = {
-          input : ""
+          input : "",
+          rows : 3,
+          columns : 3
         }
     }
     
     componentWillMount(){
       this.props.matrix && this.props.initialAction(this.props.matrix)
+      this.props.matrixAction(this.mapPostitonMatrix())
     }
     selectedAction(buttonType){
       if ( String( matrix[this.props.selected] && matrix[this.props.selected][buttonType] ) ){
@@ -31,21 +36,25 @@ class HelloWorld extends Component {
         this.props.matrix && this.props.initialAction(this.props.matrix)        
       }
     }
+    matrixselected(buttonType){
+      if ( String(this.props.matrixDiamentional[Number(this.props.selectedDiamentional)][buttonType]) ){
+        // console.log('asdasdsad', Number(this.props.matrixDiamentional[Number(this.props.selectedDiamentional)][buttonType]))
+        return Number(this.props.matrixDiamentional[Number(this.props.selectedDiamentional)][buttonType])
+      }
+    }
     clickAction = (buttonType) => {
-      // console.log(buttonType)
-      // console.log('matrix',matrix)
-      // console.log('selected ->',this.props.selected)
-      // console.log('neignbours => ',matrix[this.props.selected])
-      // console.log('current ->',matrix[this.props.selected][buttonType])
       let selected = this.props.selected;
       let current = this.selectedAction(buttonType)
       this.props.matrixUpdate(selected,current)
-      // this.props.selectedUpdate(8)
+      let matrixselect = this.matrixselected(buttonType)
+      this.props.selectedDiamentionalUpdate(matrixselect)
     }
     
     renderArray(k = []){
       // let k = [-100,-200,-300,0,1,2,4]
       for(let i = 0 ; i<k.length ;i += 1){
+        // console.log(k[i])
+        // console.log(k[i] >= 1)
         if (k[i] >= 1){
           let p = k[i] + 1
           if(k.indexOf( p) == -1 ){
@@ -104,7 +113,7 @@ class HelloWorld extends Component {
       for (var i = 0; i < myArray.length; i++) {
         result += "<tr>";
         for (var j = 0; j < myArray[i].length; j++) {
-          result += "<td>" + myArray[i][j] + "</td>";
+          result += `<td class="${ Number(this.props.selectedDiamentional) == myArray[i][j] ? "selected" : "tabledata" }">` + myArray[i][j] + "</td>";
         }
         result += "</tr>";
       }
@@ -112,20 +121,98 @@ class HelloWorld extends Component {
 
       return result;
     }
-    matrix(numrows, numcols, initial) {
+    matrix(numrows, numcols, initial = -1 ) {
       var arr = [];
       for (var i = 0; i < numrows; ++i) {
         var columns = [];
         for (var j = 0; j < numcols; ++j) {
-          columns[j] = initial;
+          columns[j] = initial += 1
         }
         arr[i] = columns;
       }
       return arr;
     }
+    top = (twoDia,i,j) => {
+      let diapoint
+      switch (i) {
+        case 0:
+          diapoint = twoDia.length - 1
+          break;
+        default:
+          diapoint = i - 1
+          break;
+      }
+      return twoDia[diapoint][j]
+    }
+    left = (twoDia,i,j) => {
+      let diapoint
+      switch (j) {
+        case 0:
+          diapoint = twoDia.length - 1
+          break;
+        default:
+          diapoint = j - 1
+          break;
+      }
+      return twoDia[i][diapoint]
+    }
+    right = (twoDia,i,j) => {
+      let diapoint
+      switch (j) {
+        case 0:
+          diapoint = j + 1 
+          break;
+        default:
+          if (j == (twoDia.length - 1)){
+            diapoint = 0
+          }else{
+            diapoint = twoDia.length - 1     
+          }     
+          break;
+      }
+      return twoDia[i][diapoint]
+    }
+    bottom = (twoDia, i, j) => {
+      let diapoint
+      switch (i) {
+        case 0:
+          diapoint = i + 1
+          break;
+        default:
+          if (i == (twoDia.length - 1)) {
+            diapoint = 0
+          } else {
+            diapoint = twoDia.length - 1
+          }
+          break;
+      }
+      return twoDia[diapoint][j]
+    }
+    mapPostitonMatrix(){
+      let twoDia = this.matrix(this.state.rows, this.state.columns)
+      console.log('mapPostitonMatrix',twoDia)
+      let postition = {}
+      for (var i = 0; i < twoDia.length; i++) {
+        for (var j = 0; j < twoDia[i].length; j++) {
+          console.log(twoDia[i][j], '->', i, j, '->', twoDia.length, twoDia[0].length)
+          postition[twoDia[i][j]] = {
+            "top": this.top(twoDia,i,j) , // 2 0 1 - 0 1 2
+            "right": this.right(twoDia, i, j), // 0 1 2 - 1 2 0
+            "bottom": this.bottom(twoDia,i,j) , // 0 1 2 - 1 2 0
+            "left": this.left(twoDia, i, j) // 1 2 0 - 0 1 2
+          }
+          
+          // console.log(postition);
+        }
+      }
+      console.log(postition);
+      return postition
+    }
+
     onChange = e => { 
       let k = e.target.value
       this.setState({input : k})
+
       // var array = JSON.parse('[' + k + ']');
     }
     parseArray = e => {
@@ -135,12 +222,15 @@ class HelloWorld extends Component {
         console.log("please add valid number")
       }
     }
+    createMarkup() {
+      // console.log(this.matrix(3, 3, 0));
+      return { __html: this.makeTableHTML(this.matrix(this.state.rows, this.state.columns)) };
+    }
     render() {
-      // console.log(this.renderArray(JSON.parse('[' + this.removeLastComma(String(this.state.input)) + ']')))
+      this.mapPostitonMatrix()
         return (
           <div>
-            <h1>HelloWorld</h1>
-            {/* <img src={image_path("/react-image.png")} alt={"react-image"}/> */}
+            <h1>Assignment</h1>
             <input
               type="text"
               onChange={this.onChange}
@@ -157,6 +247,7 @@ class HelloWorld extends Component {
               <div className="container">
                 {this.props.matrix.map(this.renderMatrix)}
               </div>
+              <div className="matrixtable" dangerouslySetInnerHTML={this.createMarkup()} />
             </div>
           </div>
         )
@@ -195,16 +286,19 @@ HelloWorld.defaultProps = {
 
   ]
 }
-function mapStateToProps(state) {
-  const { matrix, selected } = state.Helloworld
+function mapStateToProps(state) { 
+  console.log(state)
+  const { matrix, selected, selectedDiamentional, matrixDiamentional } = state.Helloworld
   return {
     selected: selected && selected.id,
-    matrix : matrix
+    matrix : matrix,
+    selectedDiamentional,
+    matrixDiamentional
   };
 }
 function mapDispatchToProps(dispatch) {
   return bindActionCreators(
-    { initialAction, matrixUpdate },
+    { initialAction, matrixUpdate, matrixAction, selectedDiamentionalUpdate },
     dispatch
   );
 }

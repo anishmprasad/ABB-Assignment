@@ -1,7 +1,10 @@
 import {
   INITIALACTION,
   SELECTED,
-  MATRIXUPDATE
+  MATRIXUPDATE,
+  MATRIXINITIALACTION,
+  MATRIXSELECTED,
+  SELECTEDDIAMENTIONALUPDATE
 } from "../../actionTypes/HelloWorld";
 import { getObjects } from '../../shared/sharedHelper'
 // type and payload actions
@@ -12,6 +15,16 @@ export function initialAction(action) {
   return function (dispatch, getState) {
     dispatch( createActionWithTypeAndPayload(SELECTED, selected));
     dispatch( createActionWithTypeAndPayload(INITIALACTION, action));
+
+  };
+}
+
+export function matrixAction(action) {
+  // debugger
+  // const selected = getObjects(action, "selected", true)[0]
+  return function (dispatch, getState) {
+    dispatch(createActionWithTypeAndPayload(MATRIXSELECTED, Object.keys(action)[3] ));
+    dispatch(createActionWithTypeAndPayload(MATRIXINITIALACTION, action));
 
   };
 }
@@ -28,9 +41,10 @@ export function matrixUpdate(oldBox , selectedBox) {
   };
 }
 
-// export function selectedUpdate(selected) {
-//   return function (dispatch, getState) {
-//     dispatch(createActionWithTypeAndPayload(SELECTEDUPDATE, selectedBox));
 
-//   };
-// }
+export function selectedDiamentionalUpdate(selectedBox) {
+  return function (dispatch, getState) {
+    dispatch(createActionWithTypeAndPayload(SELECTEDDIAMENTIONALUPDATE, selectedBox));
+
+  };
+}
