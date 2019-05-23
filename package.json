@@ -18,7 +18,7 @@
     "babel-polyfill": "^6.23.0",
     "bootstrap": "^3.4.0",
     "d3": "^3.5.17",
-    "jquery": "3.2.1",
+    "jquery": "3.4.1",
     "prop-types": "^15.5.4",
     "query-string": "^5.0.0",
     "react": "^16.3.2",
